@@ -37,8 +37,5 @@ jobs:
     - name: "Run Black"
       run: "poetry run black --check ."
 
-    - name: "Run Vulture"
-      run: "poetry run vulture ."
-
     - name: "Run PyDocStyle"
       run: "poetry run pydocstyle --explain ."
