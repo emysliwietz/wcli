@@ -174,7 +174,7 @@ def exec_command(c):
             command = c.split(" ")[0]
             arguments = ""
             for i in c.split(" ")[1:]:
-                arguments += f" \"{i}\","
+                arguments += f' "{i}",'
             if arguments[-1] == ",":
                 arguments = arguments[:-1]
             exec(f"lib.{command}({arguments})")
