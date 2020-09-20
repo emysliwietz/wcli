@@ -60,6 +60,7 @@ profile = None
 
 
 def init(d, w, a, of, p):
+    """Initialize variables on library reload."""
     global driver, wait, ac, o, profile
     driver = d
     wait = w
@@ -69,6 +70,7 @@ def init(d, w, a, of, p):
 
 
 def main():
+    """Start the webdriver."""
     if not os.path.isdir(backup_dir):
         os.mkdir(backup_dir)
     driver.get("https://web.whatsapp.com/")
@@ -84,72 +86,86 @@ def main():
 
 
 def tab():
+    """Send a tab key."""
     driver.find_element_by_tag_name("body").send_keys(Keys.TAB)
 
 
 def down():
+    """Send an arrow down key."""
     global driver
     driver.find_element_by_tag_name("body").send_keys(Keys.ARROW_DOWN)
 
 
 def enter():
+    """Send an enter key."""
     driver.find_element_by_tag_name("body").send_keys(Keys.RETURN)
 
 
 def up():
+    """Send an arrow up key."""
     driver.find_element_by_tag_name("body").send_keys(Keys.ARROW_UP)
 
 
 def up_far():
+    """Send up key 100 times."""
     for i in range(100):
         up()
 
 
 def top():
+    """Go to the very top of the chat list."""
     for i in range(10):
         up_far()
 
 
 def bottom():
+    """Go to the very bottom of the chat list."""
     for i in range(10):
         down_far()
 
 
 def down_far():
+    """Send down key 100 times."""
     for i in range(100):
         down()
 
 
 def esc():
+    """Send escape key."""
     driver.find_element_by_tag_name("body").send_keys(Keys.ESCAPE)
 
 
 def double_tab():
+    """Send tab key twice."""
     tab()
     tab()
 
 
 def curr():
+    """Output active element to the screen."""
     o(driver.switch_to.active_element)
 
 
 def curr_s():
+    """Return name of active element."""
     return driver.switch_to.active_element
 
 
-def conv():
-    conv = driver.find_elements_by_xpath(conv_name)
-    name = conv[0].get_attribute("title")
-    o(name)
-    return name
-
-
 def conv_s():
+    """Return name of current chat."""
     conv = driver.find_elements_by_xpath(conv_name)
     return conv[0].get_attribute("title")
 
 
+def conv():
+    """Output name of current chat to the screen."""
+    name = conv_s()
+    o(name)
+    return name
+
+
 def unstick():
+    """Make sure focus is on chat list."""
     for i in range(100):
         if not is_chat_s():
             tab()
@@ -160,12 +176,14 @@ def unstick():
 
 
 def folder_name(c):
+    """Return salitized name of chat to be used as a folder name."""
     c = c.replace(os.path.sep, "|")
     d = os.path.join(backup_dir, c)
     return d
 
 
 def folder(c):
+    """Create a folder for chat used for backup."""
     d = folder_name(c)
     if not os.path.isdir(d):
         os.mkdir(d)
@@ -175,15 +193,22 @@ def folder(c):
 
 
 def ifolder():
+    """Create a folder for current chat used for backup."""
     folder(conv_s())
 
 
 def open_details():
+    """Open the details page of a chat."""
     dbo = driver.find_element_by_xpath(details_button_open)
     dbo.click()
 
 
 def open_media():
+    """
+    Open the media page of a chat.
+
+    Must be activated on details page
+    """
     mbo = driver.find_element_by_xpath(media_button_open)
     mbo.click()
     time.sleep(0.2)
@@ -192,11 +217,13 @@ def open_media():
 
 
 def db_click():
+    """Click the download button in media page."""
     mbo = driver.find_element_by_xpath(media_img_download)
     mbo.click()
 
 
 def download_media():
+    """Wait and download a media file."""
     mbo = driver.find_element_by_xpath(media_img_download)
     for i in range(5):
         if len(driver.find_elements_by_xpath("//div[@class='PVMjB']")) == 11:
@@ -211,6 +238,7 @@ def download_media():
 
 
 def left_media():
+    """Go left in media screen. Return false if at the end."""
     mbo = driver.find_element_by_xpath(media_img_left_button)
     mbo.click()
     download_media()
@@ -221,6 +249,7 @@ def left_media():
 
 
 def download_all_media():
+    """Download all media files of a chat, must be activated in chat view."""
     # download_path = '{}'.format(os.path.join(folder_name(conv_s()), "media"))
     # profile.set_preference("browser.download.dir", download_path)
     open_media()
@@ -233,6 +262,7 @@ def download_all_media():
 
 
 def close_details():
+    """Close details page."""
     try:
         dbc = driver.find_element_by_xpath(details_button_close)
         dbc.click()
@@ -241,6 +271,7 @@ def close_details():
 
 
 def save_screenshot(c):
+    """Save a screenshot of the current view."""
     today = datetime.now()
     timestamp = today.strftime("%Y-%m-%d %H:%M:%S")
     c_path = "{}.png".format(os.path.join(folder_name(c), timestamp))
@@ -248,6 +279,7 @@ def save_screenshot(c):
 
 
 def check_for_group_img():
+    """Check if the group has a profile picture."""
     try:
         img = driver.find_element_by_xpath(group_image)
         img.click()
@@ -256,6 +288,7 @@ def check_for_group_img():
 
 
 def img_save(c):
+    """Save the profile picture of chat."""
     open_details()
     time.sleep(1)
     try:
@@ -293,10 +326,12 @@ def img_save(c):
 
 
 def isave():
+    """Save profile picture of current chat."""
     img_save(conv_s())
 
 
 def step():
+    """Backup single chat, return False if at the end."""
     c = conv_s()
     down()
     time.sleep(1)
@@ -311,10 +346,12 @@ def step():
 
 
 def active():
+    """Print currently active element to screen."""
     o(driver.switch_to.active_element.text.split("\n")[0])
 
 
 def is_chat_s():
+    """Return if selected element is a chat list item."""
     conv = conv_s()
     conv = "".join(filter(lambda x: x in string.printable, conv)).strip()
     active = driver.switch_to.active_element.text.split("\n")[0]
@@ -323,12 +360,14 @@ def is_chat_s():
 
 
 def is_chat():
+    """Print if selected element is a chat list item to the screen."""
     a = is_chat_s()
     o(a)
     return a
 
 
 def get_desc():
+    """Return and print description of current chat to the screen in details view."""
     try:
         driver.find_element_by_xpath("//span[@class='_1qo6g']").click()
     except:
@@ -336,14 +375,17 @@ def get_desc():
     try:
         desc = driver.find_element_by_xpath(no_group_desc)
         o(desc.text)
+        return desc.text
     except:
         try:
             desc = driver.find_element_by_xpath(group_desc)
             o(desc.text)
+            return desc.text
         except:
             try:
                 desc = driver.find_element_by_xpath(user_desc)
                 o(desc.get_attribute("title"))
+                return desc.text
             except:
                 o("Getting description failed")
 
@@ -358,6 +400,7 @@ def get_desc():
 
 
 def backup_pre():
+    """Pre-routine for backing up chats."""
     folder(conv_s())
     o(conv_s())
     isave()
@@ -367,6 +410,7 @@ def backup_pre():
 
 
 def backup():
+    """Backup all chats."""
     step_before, step_now = backup_pre()
     while step_before or step_now:
         step_before = step_now
