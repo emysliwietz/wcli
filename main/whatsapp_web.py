@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.firefox.options import Options
 
 import time
 import urllib.request
@@ -35,7 +36,9 @@ profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "image/png")
 profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "video/mp4")
 profile.set_preference("browser.download.dir", DOWN_DIR)
 
-driver = webdriver.Firefox(profile)
+options = Options()
+options.headless = True
+driver = webdriver.Firefox(profile, options=options)
 wait = WebDriverWait(driver, 600)
 ac = ActionChains(driver)
 
@@ -257,11 +260,14 @@ def handle(key):
         handle_char(chr(key))
 
 
-def main():
+def main(visible):
     """Start and initialize the library, start main loop."""
-    t("Browser will start shortly")
+    if visible:
+        driver.maximize_window()
+        t("Browser will open shortly")
+    else:
+        t("Waiting for headless browser to execute")
     lib.init(driver, wait, ac, o, profile)
-    t("Initialization completed")
     lib.main()
     resize()
     t("WhatsApp Web CLI\n")

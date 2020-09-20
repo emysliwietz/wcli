@@ -280,6 +280,11 @@ def save_screenshot(c):
     driver.save_screenshot(c_path)
 
 
+def isave_screenshot():
+    """Save a screenshot of the currently selected chat."""
+    save_screenshot(conv_s())
+
+
 def check_for_group_img():
     """Check if the group has a profile picture."""
     try:
