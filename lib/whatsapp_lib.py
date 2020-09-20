@@ -15,6 +15,7 @@ import urllib.request
 import traceback
 import csv
 import os
+from bs4 import BeautifulSoup
 import sys
 
 LAST_MESSAGES = 4
@@ -108,6 +109,18 @@ def up():
     driver.find_element_by_tag_name("body").send_keys(Keys.ARROW_UP)
 
 
+def go_up():
+    """Go one chat up and print name."""
+    up()
+    conv()
+
+
+def go_down():
+    """Go one chat down and print name."""
+    down()
+    conv()
+
+
 def up_far():
     """Send up key 100 times."""
     for i in range(100):
@@ -116,14 +129,26 @@ def up_far():
 
 def top():
     """Go to the very top of the chat list."""
-    for i in range(10):
+    chats = ["", "", ""]
+    for _ in range(10):
         up_far()
+        chats += [
+            conv_s(),
+        ]
+        if chats[-1] == chats[-2] == chats[-3]:
+            return
 
 
 def bottom():
     """Go to the very bottom of the chat list."""
-    for i in range(10):
+    chats = ["", "", ""]
+    for _ in range(10):
         down_far()
+        chats += [
+            conv_s(),
+        ]
+        if chats[-1] == chats[-2] == chats[-3]:
+            return
 
 
 def down_far():
@@ -153,10 +178,29 @@ def curr_s():
     return driver.switch_to.active_element
 
 
-def conv_s():
+def conv_chat_s():
     """Return name of current chat."""
     conv = driver.find_elements_by_xpath(conv_name)
     return conv[0].get_attribute("title")
+
+
+def conv_chat():
+    """Output name of current chat to the screen."""
+    name = conv_chat_s()
+    o(name)
+    return name
+
+
+def conv_s():
+    """Return name of current chat."""
+    html = driver.switch_to.active_element.get_attribute("innerHTML")
+    soup = BeautifulSoup(html, features="lxml")
+    that_elem = soup.find("span", {"class": "_357i8"})
+    if not that_elem:  # This is a group chat
+        that_elem = soup.find("div", {"class": "_357i8"})
+    if not that_elem:  # This chat is not saved
+        that_elem = soup.find("div", {"class": "_3CneP"})
+    return that_elem.find("span")["title"]
 
 
 def conv():
@@ -285,6 +329,46 @@ def isave_screenshot():
     save_screenshot(conv_s())
 
 
+def maximize():
+    """Maximizes the browser."""
+    driver.maximize_window()
+
+
+def goto_exact(chat_name):
+    """Open the chat view of contact with name without emojis."""
+    chat = no_emojis(chat_name)
+    top()
+    while True:
+        a = conv_s()
+        if a == chat:
+            return
+        else:
+            down()
+            unstick()
+            b = conv_s()
+            if a == b:
+                o("Chat not found")
+                return False
+
+
+def goto(chat_name):
+    """Open the chat view of contact that starts with name without emojis."""
+    chat = no_emojis(chat_name).lower()
+    top()
+    while True:
+        a = conv_s().lower()
+        if a.startswith(chat):
+            return
+        else:
+            down()
+            unstick()
+            b = conv_s().lower()
+            if a == b:
+                o("Chat not found")
+                return False
+    conv()
+
+
 def check_for_group_img():
     """Check if the group has a profile picture."""
     try:
@@ -357,12 +441,17 @@ def active():
     o(driver.switch_to.active_element.text.split("\n")[0])
 
 
+def no_emojis(s):
+    """Return string without all emojis."""
+    return "".join(filter(lambda x: x in string.printable, s)).strip()
+
+
 def is_chat_s():
     """Return if selected element is a chat list item."""
     conv = conv_s()
-    conv = "".join(filter(lambda x: x in string.printable, conv)).strip()
+    conv = no_emojis(conv)
     active = driver.switch_to.active_element.text.split("\n")[0]
-    active = "".join(filter(lambda x: x in string.printable, active)).strip()
+    active = no_emojis(active)
     return conv == active
 
 

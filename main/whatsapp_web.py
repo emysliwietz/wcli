@@ -36,11 +36,9 @@ profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "image/png")
 profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "video/mp4")
 profile.set_preference("browser.download.dir", DOWN_DIR)
 
-options = Options()
-options.headless = True
-driver = webdriver.Firefox(profile, options=options)
-wait = WebDriverWait(driver, 600)
-ac = ActionChains(driver)
+driver = None
+wait = None
+ac = None
 
 prompt = ""
 c_prompt = ""
@@ -171,7 +169,17 @@ def exec_command(c):
     try:
         reload(lib)
         lib.init(driver, wait, ac, o, profile)
-        exec("lib." + c + "()")
+        c = c.strip()
+        if " " in c:
+            command = c.split(" ")[0]
+            arguments = ""
+            for i in c.split(" ")[1:]:
+                arguments += f" \"{i}\","
+            if arguments[-1] == ",":
+                arguments = arguments[:-1]
+            exec(f"lib.{command}({arguments})")
+        else:
+            exec("lib." + c + "()")
     except Exception:
         clear_o(traceback.format_exc())
 
@@ -248,12 +256,24 @@ def handle(key):
         handle_char("")
     elif key == 150:  # Ö
         handle_char("")
-    elif key == 65 or key == 16:  # up
+    elif key == 16:  # up
         up_history()
-    elif key == 66 or key == 14:  # down
+    elif key == 14:  # down
         down_history()
+    elif key == 65:  # C-p
+        old_prompt = prompt
+        prompt = "go_up"
+        exec_shell_prompt()
+        prompt = old_prompt
+    elif key == 66:  # C-n
+        old_prompt = prompt
+        prompt = "go_down"
+        exec_shell_prompt()
+        prompt = old_prompt
     elif key == 95:  # _
         handle_char("_")
+    elif key == 32:  # _
+        handle_char(" ")
     elif key == curses.KEY_RESIZE:
         resize()
     elif chr(key).isalnum():
@@ -262,11 +282,18 @@ def handle(key):
 
 def main(visible):
     """Start and initialize the library, start main loop."""
+    global driver, wait, ac
     if visible:
-        driver.maximize_window()
         t("Browser will open shortly")
     else:
         t("Waiting for headless browser to execute")
+    options = Options()
+    options.headless = not visible
+    driver = webdriver.Firefox(profile, options=options)
+    wait = WebDriverWait(driver, 600)
+    ac = ActionChains(driver)
+    if visible:
+        driver.maximize_window()
     lib.init(driver, wait, ac, o, profile)
     lib.main()
     resize()
