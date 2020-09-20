@@ -50,6 +50,7 @@ screen.keypad(True)
 
 
 def p(s):
+    """Print to cli screen."""
     global screen
     (y, _) = screen.getyx()
     screen.move(y, 0)
@@ -59,6 +60,7 @@ def p(s):
 
 
 def t(s):
+    """Print as title."""
     global stdscr
     stdscr.move(0, 0)
     stdscr.clrtoeol()
@@ -67,6 +69,7 @@ def t(s):
 
 
 def o(s, append=True):
+    """Print to output screen."""
     global out_win
     (y, _) = out_win.getyx() if append else (0, 0)
     if y == curses.LINES - 3:
@@ -80,6 +83,7 @@ def o(s, append=True):
 
 
 def clear_o(s):
+    """Print to output screen after clearing it."""
     global out_win
     out_win.clear()
     try:
@@ -89,11 +93,13 @@ def clear_o(s):
 
 
 def all_functions():
+    """Return all functions in whatsapp_lib library."""
     reload(lib)
     return [name for (name, f) in getmembers(lib) if isfunction(f)]
 
 
 def complete():
+    """Autocomplete currently typed word."""
     global c_prompt, prompt, last_completion_num
     af = all_functions()
     for (i, f) in enumerate(af):
@@ -114,6 +120,7 @@ hist_num = 1
 
 
 def up_history():
+    """Set prompt to older command."""
     global hist_num
     try:
         prompt = prompt_history[-hist_num]
@@ -124,6 +131,7 @@ def up_history():
 
 
 def down_history():
+    """Set prompt to newer command."""
     global hist_num
     try:
         prompt = prompt_history[(-hist_num) + 1]
@@ -134,6 +142,7 @@ def down_history():
 
 
 def handle_special_prompt(c):
+    """Handle prompts that are not lib commands."""
     if c == "quit":
         curses.nocbreak()
         screen.keypad(False)
@@ -153,6 +162,7 @@ def handle_special_prompt(c):
 
 
 def exec_command(c):
+    """Execute entered library command."""
     try:
         reload(lib)
         lib.init(driver, wait, ac, o, profile)
@@ -162,6 +172,7 @@ def exec_command(c):
 
 
 def exec_shell_prompt():
+    """Parse and execute a shell prompt."""
     global prompt, prompt_history
     if prompt.isspace() or prompt == "":
         p("> ")
@@ -176,6 +187,7 @@ def exec_shell_prompt():
 
 
 def handle_char(char):
+    """Handle the typing of alnum chars."""
     global prompt, c_prompt, hist_num
     hist_num = 1
     prompt = prompt + char
@@ -185,6 +197,7 @@ def handle_char(char):
 
 
 def resize():
+    """Handle resize event of terminal window."""
     curses.update_lines_cols()
     screen.resize(curses.LINES - 1, int(curses.COLS / 2))
     out_win.resize(curses.LINES - 1, int(curses.COLS / 2))
@@ -196,6 +209,7 @@ def resize():
 
 
 def handle(key):
+    """Handle keypresses."""
     global prompt, c_prompt
     if key == 127:  # BACKSPACE
         prompt = prompt[0:-1]
@@ -242,6 +256,7 @@ def handle(key):
 
 
 def main():
+    """Start and initialize the library, start main loop."""
     t("Browser will start shortly")
     lib.init(driver, wait, ac, o, profile)
     t("Initialization completed")
