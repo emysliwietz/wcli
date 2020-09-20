@@ -8,6 +8,8 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.8"
 vulture = "^2.1"
+black = "^20.8b1"
+pydocstyle = "^5.1.1"
 
 [tool.poetry.dev-dependencies]
 
