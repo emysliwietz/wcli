@@ -13,7 +13,7 @@ import traceback
 import csv
 import os
 import sys
-import whatsapp_lib as lib
+from lib import whatsapp_lib as lib
 from importlib import reload
 import curses
 from inspect import getmembers, isfunction
@@ -220,7 +220,7 @@ def handle(key):
     elif chr(key).isalnum():
         handle_char(chr(key))
 
-if __name__ == '__main__':
+def main():
     t("Browser will start shortly")
     lib.init(driver, wait, ac, o, profile)
     t("Initialization completed")
