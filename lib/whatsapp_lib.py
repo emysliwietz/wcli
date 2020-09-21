@@ -12,14 +12,14 @@ import time
 import string
 from datetime import datetime
 import urllib.request
+from os import listdir, mkdir
+from os.path import isfile, join, expanduser
 import traceback
 import csv
-import os
 from bs4 import BeautifulSoup
 import sys
 
-LAST_MESSAGES = 4
-WAIT_FOR_CHAT_TO_LOAD = 2  # in secs
+DOWNLOAD_DIR = join(expanduser("~"), "Downloads")
 
 backup_dir = "backups"
 
@@ -74,8 +74,8 @@ def init(d, w, a, of, p):
 
 def main():
     """Start the webdriver."""
-    if not os.path.isdir(backup_dir):
-        os.mkdir(backup_dir)
+    if not isdir(backup_dir):
+        mkdir(backup_dir)
     driver.get("https://web.whatsapp.com/")
     wait = WebDriverWait(driver, 600)
     # print("Waiting for notification thingy to appear")
@@ -224,18 +224,18 @@ def unstick():
 def folder_name(c):
     """Return salitized name of chat to be used as a folder name."""
     c = c.replace(os.path.sep, "|")
-    d = os.path.join(backup_dir, c)
+    d = join(backup_dir, c)
     return d
 
 
 def folder(c):
     """Create a folder for chat used for backup."""
     d = folder_name(c)
-    if not os.path.isdir(d):
-        os.mkdir(d)
-    d = os.path.join(d, "media")
-    if not os.path.isdir(d):
-        os.mkdir(d)
+    if not isdir(d):
+        mkdir(d)
+    d = join(d, "media")
+    if not isdir(d):
+        mkdir(d)
 
 
 def ifolder():
@@ -274,9 +274,16 @@ def download_media():
     for i in range(5):
         if len(driver.find_elements_by_xpath("//div[@class='PVMjB']")) == 11:
             o("Downloading")
+            files_prev = [
+                f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
+            ]
             time.sleep(1)
             mbo = driver.find_element_by_xpath(media_img_download)
             mbo.click()
+            files_after = [
+                f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
+            ]
+            o(list(set(files_after) - set(files_prev)))
             return
         else:
             time.sleep(2)
@@ -320,7 +327,7 @@ def save_screenshot(c):
     """Save a screenshot of the current view."""
     today = datetime.now()
     timestamp = today.strftime("%Y-%m-%d %H:%M:%S")
-    c_path = "{}.png".format(os.path.join(folder_name(c), timestamp))
+    c_path = "{}.png".format(join(folder_name(c), timestamp))
     driver.save_screenshot(c_path)
 
 
