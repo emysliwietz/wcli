@@ -277,6 +277,29 @@ def db_click():
     mbo.click()
 
 
+def safe_rename(old_file, new_file):
+    """
+    Rename old_file into new_file.
+
+    WhatApp saves images by date and time. If two images are sent in the same second, they will
+    have the same name. This function numbers the file in succession to ensure no
+    files are overwritten.
+    Additionally, it removes FireFox marking downloads as duplicated with () notation.
+    """
+    k = new_file.rfind(".")
+    if new_file[:k][-1] == ")":
+        j = new_file[:k].rfind("(")
+        new_file = new_file[:j] + new_file[k:]
+    orig_new_file = new_file
+    i = 0
+    while isfile(new_file):
+        i = orig_new_file.rfind(".")
+        new_file = orig_new_file[:i] + f" - {i}" + orig_new_file[i:]
+        i += 1
+        o(new_file)
+    rename(old_file, new_file)
+
+
 def move_download_files(files, pre_hashlist):
     """Move files that have just been downloaded to backup folder of current chat."""
     for f in files:
@@ -291,7 +314,7 @@ def move_download_files(files, pre_hashlist):
                     sha256_hash.update(byte_block)
                 file_hash = sha256_hash.hexdigest()
             if file_hash not in pre_hashlist:
-                rename(file_name, d)
+                safe_rename(file_name, d)
                 o(f"Downloaded {d}")
             else:
                 remove(file_name)

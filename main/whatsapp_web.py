@@ -81,11 +81,14 @@ def o(s, append=True):
     if y == curses.LINES - 3:
         out_win.clear()
         y = 0
-    out_win.move(y + 1, 1)
-    out_win.clrtoeol()
-    out_win.addstr(str(s))
-    out_win.box()
-    v(curr_view)
+    try:
+        out_win.move(y + 1, 1)
+        out_win.clrtoeol()
+        out_win.addstr(str(s))
+        out_win.box()
+        v(curr_view)
+    except:
+        pass
 
 
 def v(s):
