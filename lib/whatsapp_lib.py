@@ -9,10 +9,11 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import time
+import hashlib
 import string
 from datetime import datetime
 import urllib.request
-from os import listdir, mkdir, rename
+from os import listdir, mkdir, rename, remove
 from os.path import isfile, isdir, join, expanduser, sep
 import traceback
 import csv
@@ -208,7 +209,6 @@ def conv_s():
     try:
         return that_elem.find("span")["title"]
     except:
-        o("df")
         return conv_chat_s()
 
 
@@ -277,13 +277,41 @@ def db_click():
     mbo.click()
 
 
-def move_download_files(files):
+def move_download_files(files, pre_hashlist):
     """Move files that have just been downloaded to backup folder of current chat."""
     for f in files:
         if f.startswith("WhatsApp Video") or f.startswith("WhatsApp Image"):
             d = join(folder_name(conv_s()), MEDIA_DIR, f)
-            o(d)
-            rename(join(DOWNLOAD_DIR, f), d)
+            file_name = join(DOWNLOAD_DIR, f)
+            sha256_hash = hashlib.sha256()
+            file_hash = ""
+            with open(file_name, "rb") as f:
+                # Read and update hash string value in blocks of 4K
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+                file_hash = sha256_hash.hexdigest()
+            if file_hash not in pre_hashlist:
+                rename(file_name, d)
+                o(f"Downloaded {d}")
+            else:
+                remove(file_name)
+                o(f"File already exists: {d}")
+
+
+def get_chat_hashes(curr):
+    """Get hashes of all files in a media folder."""
+    sha256_hash = hashlib.sha256()
+    file_hashes = []
+    media_dir = join(folder_name(curr), MEDIA_DIR)
+    for filename in listdir(media_dir):
+        with open(join(media_dir, filename), "rb") as f:
+            # Read and update hash string value in blocks of 4K
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+            file_hashes += [
+                sha256_hash.hexdigest(),
+            ]
+    return file_hashes
 
 
 def download_media(do_move=True):
@@ -291,7 +319,7 @@ def download_media(do_move=True):
     mbo = driver.find_element_by_xpath(media_img_download)
     for i in range(5):
         if len(driver.find_elements_by_xpath("//div[@class='PVMjB']")) == 11:
-            o("Downloading")
+            # o("Downloading")
             if do_move:
                 files_prev = [
                     f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
@@ -304,7 +332,10 @@ def download_media(do_move=True):
                 files_after = [
                     f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
                 ]
-                move_download_files(list(set(files_after) - set(files_prev)))
+                file_hashes = get_chat_hashes(conv_s())
+                move_download_files(
+                    list(set(files_after) - set(files_prev)), file_hashes
+                )
             return
         else:
             time.sleep(2)
