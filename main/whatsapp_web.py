@@ -15,6 +15,7 @@ import urllib.request
 import traceback
 import csv
 import os
+import glob
 import sys
 from lib import whatsapp_lib as lib
 from importlib import reload
@@ -26,9 +27,10 @@ print("Waiting for browser to open...")
 DOWN_DIR = "downloads"
 if not os.path.isdir(DOWN_DIR):
     os.mkdir(DOWN_DIR)
-profile = webdriver.FirefoxProfile(
-    "/home/user/.mozilla/firefox/w9839ycl.default-release"
-)
+mozilla_dir = os.path.join(os.path.expanduser("~"), ".mozilla", "firefox", "*")
+list_of_files = [x for x in glob.glob(mozilla_dir) if x.endswith(".default-release")]
+latest_file = max(list_of_files, key=os.path.getctime)
+profile = webdriver.FirefoxProfile(latest_file)
 profile.set_preference("browser.download.folderList", 2)
 profile.set_preference("browser.download.manager.showWhenStarting", False)
 profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "image/jpeg")
@@ -39,6 +41,7 @@ profile.set_preference("browser.download.dir", DOWN_DIR)
 driver = None
 wait = None
 ac = None
+curr_view = "chat"
 
 prompt = ""
 c_prompt = ""
@@ -73,7 +76,7 @@ def t(s):
 
 def o(s, append=True):
     """Print to output screen."""
-    global out_win
+    global out_win, curr_view
     (y, _) = out_win.getyx() if append else (0, 0)
     if y == curses.LINES - 3:
         out_win.clear()
@@ -82,7 +85,27 @@ def o(s, append=True):
     out_win.clrtoeol()
     out_win.addstr(str(s))
     out_win.box()
+    v(curr_view)
+
+
+def v(s):
+    """Print current view as title of output screen."""
+    global out_win, curr_view
+    curr_view = str(s)
+    (y, x) = out_win.getyx()
+    out_win.move(0, int(curses.COLS / 4) - int(len(curr_view) / 2))
+    out_win.box()
+    out_win.addstr(curr_view)
+    out_win.move(y, x)
     out_win.refresh()
+
+
+def clear_screen():
+    """Clear the output screen."""
+    global out_win
+    out_win.clear()
+    out_win.refresh()
+    v(curr_view)
 
 
 def clear_o(s):
@@ -168,7 +191,7 @@ def exec_command(c):
     """Execute entered library command."""
     try:
         reload(lib)
-        lib.init(driver, wait, ac, o, profile)
+        lib.init(driver, wait, o, v, curr_view)
         c = c.strip()
         if " " in c:
             command = c.split(" ")[0]
@@ -276,13 +299,15 @@ def handle(key):
         handle_char(" ")
     elif key == curses.KEY_RESIZE:
         resize()
+    elif key == 12:  # clear_screen
+        clear_screen()
     elif chr(key).isalnum():
         handle_char(chr(key))
 
 
 def main(visible):
     """Start and initialize the library, start main loop."""
-    global driver, wait, ac
+    global driver, wait, o, v, curr_view
     if visible:
         t("Browser will open shortly")
     else:
@@ -294,7 +319,7 @@ def main(visible):
     ac = ActionChains(driver)
     if visible:
         driver.maximize_window()
-    lib.init(driver, wait, ac, o, profile)
+    lib.init(driver, wait, o, v, curr_view)
     lib.main()
     resize()
     t("WhatsApp Web CLI\n")

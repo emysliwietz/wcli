@@ -12,16 +12,16 @@ import time
 import string
 from datetime import datetime
 import urllib.request
-from os import listdir, mkdir
-from os.path import isfile, join, expanduser
+from os import listdir, mkdir, rename
+from os.path import isfile, isdir, join, expanduser, sep
 import traceback
 import csv
 from bs4 import BeautifulSoup
 import sys
 
 DOWNLOAD_DIR = join(expanduser("~"), "Downloads")
-
-backup_dir = "backups"
+MEDIA_DIR = "media"
+BACKUP_DIR = "backups"
 
 message_dic = {}
 chat_dict = {}
@@ -57,25 +57,25 @@ first = None
 
 driver = None
 wait = None
-ac = None
 o = None
-profile = None
+v = None
+curr_view = None
 
 
-def init(d, w, a, of, p):
+def init(d, w, of, vf, c):
     """Initialize variables on library reload."""
-    global driver, wait, ac, o, profile
+    global driver, wait, o, v, curr_view
     driver = d
     wait = w
-    ac = a
     o = of
-    profile = p
+    v = vf
+    curr_view = c
 
 
 def main():
     """Start the webdriver."""
-    if not isdir(backup_dir):
-        mkdir(backup_dir)
+    if not isdir(BACKUP_DIR):
+        mkdir(BACKUP_DIR)
     driver.get("https://web.whatsapp.com/")
     wait = WebDriverWait(driver, 600)
     # print("Waiting for notification thingy to appear")
@@ -192,7 +192,12 @@ def conv_chat():
 
 
 def conv_s():
-    """Return name of current chat."""
+    """
+    Return name of current chat.
+
+    ONLY WORKS IN CHAT VIEW!!!
+    For more reliablility (although slower execution), use conv_chat_s instead
+    """
     html = driver.switch_to.active_element.get_attribute("innerHTML")
     soup = BeautifulSoup(html, features="lxml")
     that_elem = soup.find("span", {"class": "_357i8"})
@@ -200,7 +205,11 @@ def conv_s():
         that_elem = soup.find("div", {"class": "_357i8"})
     if not that_elem:  # This chat is not saved
         that_elem = soup.find("div", {"class": "_3CneP"})
-    return that_elem.find("span")["title"]
+    try:
+        return that_elem.find("span")["title"]
+    except:
+        o("df")
+        return conv_chat_s()
 
 
 def conv():
@@ -223,8 +232,8 @@ def unstick():
 
 def folder_name(c):
     """Return salitized name of chat to be used as a folder name."""
-    c = c.replace(os.path.sep, "|")
-    d = join(backup_dir, c)
+    c = c.replace(sep, "|")
+    d = join(BACKUP_DIR, c)
     return d
 
 
@@ -233,7 +242,7 @@ def folder(c):
     d = folder_name(c)
     if not isdir(d):
         mkdir(d)
-    d = join(d, "media")
+    d = join(d, MEDIA_DIR)
     if not isdir(d):
         mkdir(d)
 
@@ -268,22 +277,34 @@ def db_click():
     mbo.click()
 
 
-def download_media():
+def move_download_files(files):
+    """Move files that have just been downloaded to backup folder of current chat."""
+    for f in files:
+        if f.startswith("WhatsApp Video") or f.startswith("WhatsApp Image"):
+            d = join(folder_name(conv_s()), MEDIA_DIR, f)
+            o(d)
+            rename(join(DOWNLOAD_DIR, f), d)
+
+
+def download_media(do_move=True):
     """Wait and download a media file."""
     mbo = driver.find_element_by_xpath(media_img_download)
     for i in range(5):
         if len(driver.find_elements_by_xpath("//div[@class='PVMjB']")) == 11:
             o("Downloading")
-            files_prev = [
-                f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
-            ]
+            if do_move:
+                files_prev = [
+                    f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
+                ]
             time.sleep(1)
             mbo = driver.find_element_by_xpath(media_img_download)
             mbo.click()
-            files_after = [
-                f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
-            ]
-            o(list(set(files_after) - set(files_prev)))
+            if do_move:
+                time.sleep(1)
+                files_after = [
+                    f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))
+                ]
+                move_download_files(list(set(files_after) - set(files_prev)))
             return
         else:
             time.sleep(2)
@@ -303,12 +324,16 @@ def left_media():
 
 def download_all_media():
     """Download all media files of a chat, must be activated in chat view."""
-    # download_path = '{}'.format(os.path.join(folder_name(conv_s()), "media"))
-    # profile.set_preference("browser.download.dir", download_path)
     open_media()
-    download_media()
+    files_prev = [f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))]
+    download_media(do_move=False)
     while left_media():
         pass
+    time.sleep(1)
+    # to make sure all images finish downloading
+    # (there is no direct way to check for finished downloads)
+    files_after = [f for f in listdir(DOWNLOAD_DIR) if isfile(join(DOWNLOAD_DIR, f))]
+    move_download_files(list(set(files_after) - set(files_prev)))
     esc()
     esc()
     o("Finished downloading media")
@@ -425,7 +450,7 @@ def img_save(c):
 
 def isave():
     """Save profile picture of current chat."""
-    img_save(conv_s())
+    img_save(conv_chat_s())
 
 
 def step():
