@@ -219,6 +219,19 @@ def conv():
     return name
 
 
+def message(n):
+    """Print message number n."""
+    n = int(n)
+    message = '//div[@class="copyable-text"]'
+    a = driver.find_elements_by_xpath(message)
+    o(a[n].text)
+
+
+def last_message():
+    """Print last message."""
+    message(-1)
+
+
 def unstick():
     """Make sure focus is on chat list."""
     for i in range(100):

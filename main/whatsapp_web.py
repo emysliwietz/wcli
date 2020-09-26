@@ -282,6 +282,8 @@ def handle(key):
         handle_char("")
     elif key == 150:  # Ö
         handle_char("")
+    elif key == 45:  # -
+        handle_char("-")
     elif key == 16:  # up
         up_history()
     elif key == 14:  # down
