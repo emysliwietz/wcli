@@ -19,6 +19,7 @@ import traceback
 import csv
 from bs4 import BeautifulSoup
 import sys
+import re
 
 DOWNLOAD_DIR = join(expanduser("~"), "Downloads")
 MEDIA_DIR = "media"
@@ -219,13 +220,22 @@ def conv():
     return name
 
 
-def unread():
+def num_unread():
     """Print number of unread chats."""
-    unread = '//span[@class="_31gEB"]/../../../../../div[@class="_3dtfXu"]/div/div'
+    unread = '//span[@class="_31gEB"]/../../../../../div[@class="_3dtfX"]/div/span'
     a = driver.find_elements_by_xpath(unread)
-    for elem in a:
-        o(elem.get_attribute("title"))
     o(len(a))
+
+
+def unread():
+    """Print names of unread chats."""
+    unread = '//span[@class="_31gEB"]/../../../../../div[@class="_3dtfX"]/div/span'
+    a = driver.find_elements_by_xpath(unread)
+    a += driver.find_elements_by_xpath(unread + "/span")
+    for elem in a:
+        title = elem.get_attribute("title")
+        if title:
+            o(title)
 
 
 def message(n):
@@ -239,6 +249,88 @@ def message(n):
 def last_message():
     """Print last message."""
     message(-1)
+
+
+def is_message_s():
+    """Check if active element is a message."""
+    c = curr_s()
+    classes = c.get_attribute("class")
+    return "message-out" in classes or "message-in" in classes
+
+
+def is_message():
+    """Print if active element is a message."""
+    o(str(is_message_s()))
+
+
+def clean_colon(s):
+    """Remove the trailing colon."""
+    s = s.strip()
+    if s.endswith(":"):
+        return s[:-1].strip()
+    return s
+
+
+def iter_replace_image(html, replacements):
+    """Replace nth occurence of img tag in html string with nth string in list."""
+    regex = re.compile("<.*?>")
+    new = html
+    for r in replacements:
+        new = re.sub(regex, str(r), new, 1)
+    return new
+
+
+def emoji_clean_msg(msg):
+    if msg:
+        replacements = []
+        for i in msg.find_all("img"):
+            replacements.append(i.get("alt"))
+        msg = msg.decode_contents()
+        msg = iter_replace_image(msg, replacements)
+    return msg
+
+
+def message_info_s():
+    """Return information about message."""
+    message = curr_s()
+    html = message.get_attribute("innerHTML")
+    soup = BeautifulSoup(html, features="lxml")
+    forwarded = soup.find("span", {"class": "Vts9M"})
+    sender = clean_colon(
+        soup.find("div", {"class": "_3sKvP wQZ0F"}).find("span").get("aria-label")
+    )
+    date = clean_colon(
+        soup.find("div", {"class": "_274yw"})
+        .find("div", {"class": "copyable-text"})
+        .get("data-pre-plain-text")
+    )
+    text = soup.find(
+        "span", {"class": "_3Whw5 selectable-text invisible-space copyable-text"}
+    ).find("span")
+    text = emoji_clean_msg(text)
+    q_from = soup.find("span", {"class": "_3Whw5"})
+    q_from = emoji_clean_msg(q_from)
+    q_msg = soup.find("span", {"class": "quoted-mention _3Whw5"})
+    q_msg = emoji_clean_msg(q_msg)
+    msg = {}
+    msg["forwarded"] = not forwarded is None
+    msg["sender"] = sender
+    msg["date"] = date
+    msg["text"] = text
+    msg["q_from"] = q_from
+    msg["q_msg"] = q_msg
+    return msg
+
+
+def message_info():
+    """Print information about message."""
+    msg = message_info_s()
+    o("Forwarded: " + str(msg["forwarded"]))
+    o("Sender: " + str(msg["sender"]))
+    o("Date: " + str(msg["date"]))
+    o("Text: " + str(msg["text"]))
+    o("Quoted from: " + str(msg["q_from"]))
+    o("Quoted text: " + str(msg["q_msg"]))
 
 
 def unstick():
