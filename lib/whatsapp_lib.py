@@ -221,8 +221,10 @@ def conv():
 
 def unread():
     """Print number of unread chats."""
-    unread = '//span[@class="_31gEB"]'
+    unread = '//span[@class="_31gEB"]/../../../../../div[@class="_3dtfXu"]/div/div'
     a = driver.find_elements_by_xpath(unread)
+    for elem in a:
+        o(elem.get_attribute("title"))
     o(len(a))
 
 
