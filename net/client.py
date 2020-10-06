@@ -4,27 +4,22 @@
 
 import socket
 
-
-def client_program():
-    """Send data to server."""
-    host = "localhost"  # as both code is running on same pc
-    port = 5665  # socket server port number
-
-    client_socket = socket.socket()  # instantiate
-    client_socket.connect((host, port))  # connect to the server
-
-    message = input(" -> ")  # take input
-
-    while message.lower().strip() != "bye":
-        client_socket.send(message.encode())  # send message
-        data = client_socket.recv(1024).decode()  # receive response
-
-        print("Received from server: " + data)  # show in terminal
-
-        message = input(" -> ")  # again take input
-
-    client_socket.close()  # close the connection
+client_socket = None
 
 
-if __name__ == "__main__":
-    client_program()
+def init_client(host, port):
+    """Initialize client and connect to server."""
+    client_socket = socket.socket()
+    client_socket.connect((host, port))
+
+
+def send_data(msg):
+    """Send message to server, return result."""
+    client_socket.send(message.encode())
+    data = client_socket.recv(1024).decode()
+    return data
+
+
+def close_client():
+    """Close the client socket."""
+    client_socket.close()
