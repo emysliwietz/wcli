@@ -134,6 +134,7 @@ def complete():
     for (i, f) in enumerate(af):
         if f.startswith(c_prompt) and not prompt == f and i > last_completion_num:
             prompt = f
+            o(getattr(lib, f).__doc__)
             last_completion_num = i
             p("> " + prompt)
             return
