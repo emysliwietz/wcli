@@ -2,6 +2,7 @@
 
 """Main function."""
 
+from contextlib import suppress
 import argparse
 
 parser = argparse.ArgumentParser(description="WhatsApp CLI")
@@ -44,8 +45,13 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    print(args.port[0])
-    pass
-    # from main import whatsapp_web as ww
+    with suppress(TypeError):
+        args.port = int(args.port[0])
 
-    # ww.main(args.visible)
+    if args.server:
+        print("Server")
+        from main.server import main
+
+        main(args.visible, args.port)
+    else:
+        print("Client")

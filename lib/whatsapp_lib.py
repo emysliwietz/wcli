@@ -64,14 +64,11 @@ v = None
 curr_view = None
 
 
-def init(d, w, of, vf, c):
+def init(d, w):
     """Initialize variables on library reload."""
-    global driver, wait, o, v, curr_view
+    global driver, wait
     driver = d
     wait = w
-    o = of
-    v = vf
-    curr_view = c
 
 
 def main():

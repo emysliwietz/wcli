@@ -3,13 +3,13 @@
 """TCP/IP server."""
 import socket
 import time
-from threading import Thread
+from threading import Thread, Lock
+from server.server import exec_command
 
 MAX_CONCURRENT_CONNECTIONS = 4
 server_socket = socket.socket()
-connect_loop = Thread(target=server_connect_loop, args=())
 server_running = False
-backend_lock = threading.Lock()
+backend_lock = Lock()
 
 client_list = []
 
@@ -17,7 +17,7 @@ client_list = []
 def server_handle_command(cmd):
     """Handle a command in backend."""
     with lock:
-        data = "Handled"  # to be replaced with actual backend action
+        data = exec_command(cmd)
     return data
 
 
@@ -59,6 +59,9 @@ def server_connect_loop():
             server_connect()
         else:
             time.sleep(1)
+
+
+connect_loop = Thread(target=server_connect_loop, args=())
 
 
 def server_close():
