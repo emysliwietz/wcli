@@ -9,10 +9,9 @@ import csv
 import os
 import glob
 import sys
-from lib import whatsapp_lib as lib
-from importlib import reload
 import curses
 from inspect import getmembers, isfunction
+from net.client import init_client, send_data, close_client
 
 
 curr_view = "chat"
@@ -21,12 +20,9 @@ prompt = ""
 c_prompt = ""
 last_completion_num = -1
 prompt_history = []
-stdscr = curses.initscr()
-screen = curses.newwin(curses.LINES - 1, int(curses.COLS / 2), 1, 0)
-out_win = curses.newwin(curses.LINES - 1, int(curses.COLS / 2), 1, int(curses.COLS / 2))
-curses.noecho()
-curses.cbreak()
-screen.keypad(True)
+stdscr = None
+screen = None
+out_win = None
 
 
 def p(s):
@@ -102,7 +98,7 @@ def complete():
     for (i, f) in enumerate(af):
         if f.startswith(c_prompt) and not prompt == f and i > last_completion_num:
             prompt = f
-            o(getattr(lib, f).__doc__)
+            # o(getattr(lib, f).__doc__)
             last_completion_num = i
             p("> " + prompt)
             return
@@ -159,6 +155,16 @@ def handle_special_prompt(c):
     return False
 
 
+def send_command(cmd):
+    """Send command to server."""
+    return send_data(cmd)
+
+
+def handle_cmd_output(resp):
+    """Handle output of response from server."""
+    o(resp)
+
+
 def exec_shell_prompt():
     """Parse and execute a shell prompt."""
     global prompt, prompt_history
@@ -171,7 +177,7 @@ def exec_shell_prompt():
         old_p,
     ]
     if not handle_special_prompt(old_p):
-        exec_command(old_p)
+        handle_cmd_output(send_command(old_p))
 
 
 def handle_char(char):
@@ -259,8 +265,18 @@ def handle(key):
         handle_char(chr(key))
 
 
-def main():
+def main(host, port):
+    global stdscr, screen, out_win
+    stdscr = curses.initscr()
+    screen = curses.newwin(curses.LINES - 1, int(curses.COLS / 2), 1, 0)
+    out_win = curses.newwin(
+        curses.LINES - 1, int(curses.COLS / 2), 1, int(curses.COLS / 2)
+    )
+    curses.noecho()
+    curses.cbreak()
+    screen.keypad(True)
     resize()
+    init_client(host, port)
     p("> ")
     while True:
         a = stdscr.getch()

@@ -54,12 +54,10 @@ no_group_desc = '//div[@class="TX5f-"]'
 group_desc = '//div[@class="_3sKYI"]//span'
 user_desc = '//span[@class="_1X4JR"]//span'
 
-
 first = None
 
 driver = None
 wait = None
-o = None
 v = None
 curr_view = None
 

@@ -5,6 +5,7 @@ import socket
 import time
 from threading import Thread, Lock
 from server.server import exec_command
+from signal import signal, SIGINT
 
 MAX_CONCURRENT_CONNECTIONS = 4
 server_socket = socket.socket()
@@ -16,9 +17,9 @@ client_list = []
 
 def server_handle_command(cmd):
     """Handle a command in backend."""
-    with lock:
+    with backend_lock:
         data = exec_command(cmd)
-    return data
+    return data if data else "None"
 
 
 def client_disconnect(conn):
@@ -30,30 +31,39 @@ def client_disconnect(conn):
             conn.close()
 
 
-def client_handler(conn):
+def client_handler(conn, address):
     """Handle commands from client."""
+    conn.settimeout(1)
     while server_running:
-        cmd = conn.recv(1024).decode()
-        print(f"from connected user {address}: " + str(cmd))
-        if cmd.lower().strip() == "quit":
-            break
-        data = server_handle_command(cmd)
-        conn.send(data.encode())
+        try:
+            cmd = conn.recv(1024).decode()
+            print(f"from connected user {address}: " + str(cmd))
+            if cmd.lower().strip() == "quit":
+                break
+            data = server_handle_command(cmd)
+            conn.send(data.encode())
+        except:
+            pass
     client_disconnect(conn)
 
 
 def server_connect():
     """Wait for client to connect."""
     global client_list
-    conn, address = server_socket.accept()
-    client_thread = Thread(target=client_handler, args=(conn,))
-    client_list.append((conn, address, client_thread))
-    client_thread.start()
-    print("Accepted connection: " + str(address))
+    server_socket.settimeout(1)
+    try:
+        conn, address = server_socket.accept()
+        client_thread = Thread(target=client_handler, args=(conn, address))
+        client_list.append((conn, address, client_thread))
+        client_thread.start()
+        print("Accepted connection: " + str(address))
+    except:
+        pass
 
 
 def server_connect_loop():
     """Continuously wait for clients to connect."""
+    global server_running
     while server_running:
         if len(client_list) <= MAX_CONCURRENT_CONNECTIONS:
             server_connect()
@@ -75,10 +85,17 @@ def server_close():
     print("Closed")
 
 
+def handler(signal_received, frame):
+    # Handle any cleanup here
+    print("SIGINT or CTRL-C detected. Exiting gracefully")
+    server_close()
+
+
 def init_server(port):
     """Start the server."""
     global server_running
     server_running = True
+    signal(SIGINT, handler)
     server_socket.bind(("localhost", port))
     server_socket.listen(1)
     connect_loop.start()

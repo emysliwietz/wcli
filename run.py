@@ -28,7 +28,7 @@ parser.add_argument(
     "-c",
     "--client",
     dest="server",
-    action="store_false",
+    nargs=1,
     default=True,
     help="Start in client mode (default)",
 )
@@ -48,10 +48,17 @@ if __name__ == "__main__":
     with suppress(TypeError):
         args.port = int(args.port[0])
 
-    if args.server:
-        print("Server")
+    with suppress(TypeError):
+        args.server = args.server[0]
+    if args.server == False:
+        args.server = "localhost"
+
+    if args.server == True:
         from main.server import main
 
         main(args.visible, args.port)
     else:
-        print("Client")
+        print(args.server)
+        from main.client import main
+
+        main(args.server, args.port)

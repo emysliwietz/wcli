@@ -2,14 +2,6 @@
 
 """Server to handle selenium on WhatsApp Web"""
 
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.firefox.options import Options
-
 import time
 import urllib.request
 import traceback
@@ -17,10 +9,18 @@ import csv
 import os
 import glob
 import sys
-from lib import whatsapp_lib as lib
+from lib import whatsapp_lib as l
 from importlib import reload
 import curses
 from inspect import getmembers, isfunction
+
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.firefox.options import Options
 
 print("Waiting for browser to open...")
 
@@ -45,17 +45,17 @@ ac = None
 
 def all_functions():
     """Return all functions in whatsapp_lib library."""
-    reload(lib)
-    return [name for (name, f) in getmembers(lib) if isfunction(f)]
+    reload(l)
+    return [name for (name, f) in getmembers(l) if isfunction(f)]
 
 
 def exec_command(c):
     """Execute entered library command."""
     try:
-        reload(lib)
-        lib.init(driver, wait)
+        reload(l)
+        l.init(driver, wait)
         c = c.strip()
-        ret = {}
+        ret = {"l": l}
         if " " in c:
             command = c.split(" ")[0]
             arguments = ""
@@ -63,13 +63,14 @@ def exec_command(c):
                 arguments += f' "{i}",'
             if arguments[-1] == ",":
                 arguments = arguments[:-1]
-            exec(f"x = lib.{command}({arguments})", d)
-            return d["x"]
+            exec(f"x = l.{command}({arguments})", ret)
+            return ret["x"]
         else:
-            exec("x = lib." + c + "()", d)
-            return d["x"]
+            exec("x = l." + c + "()", ret)
+            return ret["x"]
     except Exception:
         print(traceback.format_exc())
+        return "Error"
 
 
 def main(visible):
@@ -86,6 +87,6 @@ def main(visible):
     ac = ActionChains(driver)
     if visible:
         driver.maximize_window()
-    lib.init(driver, wait)
-    lib.main()
+    l.init(driver, wait)
+    l.main()
     print("WhatsApp Web CLI")
