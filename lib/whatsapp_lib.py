@@ -29,10 +29,10 @@ message_dic = {}
 chat_dict = {}
 
 notifications = '//div[@class="_2kJqr"]'
-chat_class = '//div[@class="_210SC"]'
+chat_class = '//div[@class="_2H7Xo"]'
 group_name = '//div[@class="_357i8"]'
 chat_name = '//div[@class="_3CneP"]'
-conv_name = '//div[@class="DP7CM"]//span'
+conv_name = '//div[@class="_3Tw1q"]//span'
 details_button_open = '//header[@class="_1iFv8"]'
 details_button_close = '//button[@class="t4a8o"]'
 media_button_open = '//div[@class="sb_Co"]'
@@ -60,6 +60,11 @@ driver = None
 wait = None
 v = None
 curr_view = None
+
+
+def o(text):
+    """REMOVE."""
+    print(text)
 
 
 def init(d, w):
@@ -199,7 +204,7 @@ def conv_s():
     soup = BeautifulSoup(html, features="lxml")
     that_elem = soup.find("span", {"class": "_357i8"})
     if not that_elem:  # This is a group chat
-        that_elem = soup.find("div", {"class": "_357i8"})
+        that_elem = soup.find("div", {"class": "_3Pwfx"})
     if not that_elem:  # This chat is not saved
         that_elem = soup.find("div", {"class": "_3CneP"})
     try:

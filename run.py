@@ -42,6 +42,15 @@ parser.add_argument(
     help="Override port (default 5665)",
 )
 
+parser.add_argument(
+    "-P",
+    "--profile",
+    dest="profile",
+    nargs=1,
+    default="RussianBot",
+    help="Override profile (default: RussianBot)",
+)
+
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -56,7 +65,7 @@ if __name__ == "__main__":
     if args.server == True:
         from main.server import main
 
-        main(args.visible, args.port)
+        main(args.visible, args.port, args.profile)
     else:
         print(args.server)
         from main.client import main

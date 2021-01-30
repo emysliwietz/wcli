@@ -6,6 +6,6 @@ from net.server import init_server
 from server import server
 
 
-def main(visible, port):
+def main(visible, port, profile):
     init_server(port)
-    server.main(visible)
+    server.main(visible, profile)

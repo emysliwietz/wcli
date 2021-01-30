@@ -1,6 +1,6 @@
 #!/bin/python3
 
-"""Server to handle selenium on WhatsApp Web"""
+"""Server to handle selenium on WhatsApp Web."""
 
 import time
 import urllib.request
@@ -27,16 +27,6 @@ print("Waiting for browser to open...")
 DOWN_DIR = "downloads"
 if not os.path.isdir(DOWN_DIR):
     os.mkdir(DOWN_DIR)
-mozilla_dir = os.path.join(os.path.expanduser("~"), ".mozilla", "firefox", "*")
-list_of_files = [x for x in glob.glob(mozilla_dir) if x.endswith(".default-release")]
-latest_file = max(list_of_files, key=os.path.getctime)
-profile = webdriver.FirefoxProfile(latest_file)
-profile.set_preference("browser.download.folderList", 2)
-profile.set_preference("browser.download.manager.showWhenStarting", False)
-profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "image/jpeg")
-profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "image/png")
-profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "video/mp4")
-profile.set_preference("browser.download.dir", DOWN_DIR)
 
 driver = None
 wait = None
@@ -72,8 +62,21 @@ def exec_command(c):
         print(traceback.format_exc())
         return "Error"
 
+def make_profile(profile):
+    mozilla_dir = os.path.join(os.path.expanduser("~"), ".mozilla", "firefox", "*")
+    list_of_files = [x for x in glob.glob(mozilla_dir) if x.endswith(f".{profile}")]
+    latest_file = max(list_of_files, key=os.path.getctime)
+    profile = None
+    profile = webdriver.FirefoxProfile(latest_file)
+    profile.set_preference("browser.download.folderList", 2)
+    profile.set_preference("browser.download.manager.showWhenStarting", False)
+    profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "image/jpeg")
+    profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "image/png")
+    profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "video/mp4")
+    profile.set_preference("browser.download.dir", DOWN_DIR)
+    return profile
 
-def main(visible):
+def main(visible, profile):
     """Start and initialize the library, start main loop."""
     global driver, wait, o, v, curr_view
     if visible:
@@ -82,11 +85,16 @@ def main(visible):
         print("Waiting for headless browser to execute")
     options = Options()
     options.headless = not visible
+    profile = make_profile(profile)
+    print("Test 1")
     driver = webdriver.Firefox(profile, options=options)
     wait = WebDriverWait(driver, 600)
     ac = ActionChains(driver)
+    print("Test 2")
     if visible:
         driver.maximize_window()
+    print("Test 3")
     l.init(driver, wait)
+    print("Test 4")
     l.main()
     print("WhatsApp Web CLI")
